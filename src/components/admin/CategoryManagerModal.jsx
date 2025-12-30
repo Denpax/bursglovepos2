@@ -102,9 +102,10 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
     setLoading(false);
   }
 
-  return (
-<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
-  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md my-auto overflow-y-auto max-h-[95vh]">
+ return (
+<div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-start sm:items-center z-50 overflow-y-auto p-4">
+  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mt-10 sm:mt-0 mb-10 sm:mb-0 overflow-y-auto max-h-[90vh]">
+
         <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center">
           <h3 className="text-xl font-bold text-gray-800 dark:text-white">Gestionar Categorías</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">

@@ -315,7 +315,7 @@ export default function App() {
   const showAdminSwitch = adminTabs.includes(activeTab) && hasAdminAccess;
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden">
+   <div className="flex h-screen bg-gray-100 dark:bg-gray-900 overflow-auto">
       <Sidebar 
         activeTab={activeTab} 
         onTabChange={handleTabChange} 
@@ -342,7 +342,7 @@ export default function App() {
         </button>
       )}
       
-      <main className="flex-1 flex flex-col overflow-hidden relative pt-16 md:pt-0">
+      <main className="flex-1 flex flex-col overflow-auto relative pt-16 md:pt-0">
         {showAdminSwitch && (
           <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-3 flex justify-end items-center shadow-sm z-10">
              <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">

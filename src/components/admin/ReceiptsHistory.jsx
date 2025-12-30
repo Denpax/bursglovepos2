@@ -381,7 +381,8 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
       </div>
 
       {/* Detail Panel */}
-      <div className={`${selectedSale ? 'flex' : 'hidden md:flex'} flex-col flex-1 bg-gray-100 overflow-hidden`}>
+      <div className={`${selectedSale ? 'flex' : 'hidden md:flex'} flex-col flex-1 bg-gray-100 overflow-auto`}>
+
         {selectedSale ? (
           <div className="flex flex-col h-full">
             <div className="p-4 bg-white border-b flex flex-wrap justify-between items-center shadow-sm gap-4">
@@ -407,7 +408,7 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
               </button>
             </div>
 
-           <div className="flex-1 overflow-y-auto overflow-x-auto p-4 md:p-8">
+          <div className="flex-1 bg-white rounded-xl shadow-sm overflow-x-auto overflow-y-auto p-4 md:p-8">
               {detailsLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -443,7 +444,7 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
                   </div>
                 </div>
                 
-            <table className="w-full min-w-[480px] text-left">
+           <table className="min-w-[600px] w-full text-left text-sm">
                   <thead className="bg-gray-50 text-gray-500 text-sm">
                     <tr>
                       <th className="p-4">Producto</th>
