@@ -7,30 +7,36 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // ✅ Montaje seguro con cleanup
+  // ✅ Montaje seguro con cleanup y control de errores
   useEffect(() => {
     let isMounted = true;
 
     async function safeFetchCategories() {
+      if (!storeMode) return; // 🛑 Previene llamada sin store definido
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('categories')
-          .select('*')
-          .eq('store_type', storeMode)
-          .order('name', { ascending: true });
+          ?.from('categories')
+          ?.select('*')
+          ?.eq('store_type', storeMode)
+          ?.order('name', { ascending: true });
 
         if (error) throw error;
+        if (!data || !Array.isArray(data)) {
+          if (isMounted) setCategories([]);
+          return;
+        }
 
         if (isMounted) {
-          const sortedData = (data || []).sort((a, b) =>
-            a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
+          const sortedData = data.sort((a, b) =>
+            a.name?.localeCompare(b.name ?? '', 'es', { sensitivity: 'base' })
           );
           setCategories(sortedData);
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
-        if (isMounted) alert('Error al cargar categorías: ' + error.message);
+        console.error('[CategoryManager] Error inicial:', error);
+        if (isMounted)
+          alert('Error al cargar categorías. Verifica tu conexión a internet.');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -43,6 +49,27 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
     };
   }, [storeMode]);
 
+  // ✅ Reutilizable fuera del montaje
+  async function fetchCategories() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('store_type', storeMode)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      const sortedData = (data || []).sort((a, b) =>
+        a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
+      );
+      setCategories(sortedData);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      alert('Error al cargar categorías: ' + error.message);
+    }
+  }
+
   async function handleAddCategory(e) {
     e.preventDefault();
     const trimmedName = newCategoryName.trim();
@@ -53,7 +80,7 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
     }
 
     const duplicate = categories.find(
-      cat => cat.name.toLowerCase() === trimmedName.toLowerCase()
+      (cat) => cat.name.toLowerCase() === trimmedName.toLowerCase()
     );
 
     if (duplicate) {
@@ -76,7 +103,6 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
         }
       } else {
         setNewCategoryName('');
-        await supabase.removeAllChannels(); // 🔒 previene fugas de conexión
         await fetchCategories(); // recarga lista
       }
     } catch (error) {
@@ -87,37 +113,12 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
     }
   }
 
-  // ✅ Versión segura de fetchCategories reutilizable
-  async function fetchCategories() {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('store_type', storeMode)
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-
-      const sortedData = (data || []).sort((a, b) =>
-        a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
-      );
-      setCategories(sortedData);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      alert('Error al cargar categorías: ' + error.message);
-    }
-  }
-
   async function handleDeleteCategory(id) {
     if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('categories').delete().eq('id', id);
       if (error) throw error;
 
       await fetchCategories();
@@ -129,7 +130,7 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
     }
   }
 
-  // ✅ Limpieza de estado al cerrar
+  // ✅ Limpieza al cerrar
   const handleClose = () => {
     setCategories([]);
     setNewCategoryName('');
@@ -140,8 +141,13 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
     <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-start sm:items-center z-50 overflow-y-auto p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mt-10 sm:mt-0 mb-10 sm:mb-0 overflow-y-auto max-h-[90vh]">
         <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center">
-          <h3 className="text-xl font-bold text-gray-800 dark:text-white">Gestionar Categorías</h3>
-          <button onClick={handleClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+            Gestionar Categorías
+          </h3>
+          <button
+            onClick={handleClose}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400"
+          >
             <X size={24} />
           </button>
         </div>
@@ -153,7 +159,7 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
               placeholder="Nueva categoría..."
               className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               value={newCategoryName}
-              onChange={e => setNewCategoryName(e.target.value)}
+              onChange={(e) => setNewCategoryName(e.target.value)}
               disabled={loading}
             />
             <button
@@ -161,21 +167,29 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
               disabled={loading}
             >
-              {loading ? <Loader size={18} className="animate-spin" /> : <Save size={18} />}
+              {loading ? (
+                <Loader size={18} className="animate-spin" />
+              ) : (
+                <Save size={18} />
+              )}
               Agregar
             </button>
           </form>
 
           <div className="space-y-2">
             {categories.length === 0 && !loading && (
-              <p className="text-gray-500 dark:text-gray-400 text-center">No hay categorías.</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center">
+                No hay categorías.
+              </p>
             )}
-            {categories.map(category => (
+            {categories.map((category) => (
               <div
                 key={category.id}
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
               >
-                <span className="font-medium text-gray-800 dark:text-gray-200">{category.name}</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200">
+                  {category.name}
+                </span>
                 <button
                   onClick={() => handleDeleteCategory(category.id)}
                   className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
