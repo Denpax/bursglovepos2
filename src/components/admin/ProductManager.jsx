@@ -357,10 +357,9 @@ export default function ProductManager({ storeMode = 'retail' }) {
       </div>
 
 {/* ✅ Contenedor corregido sin overflow-hidden */}
-<div className="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700">
-  {/* 🧭 Scroll horizontal y vertical con padding para no cortar bordes */}
-  <div className="overflow-auto rounded-b-xl pb-2">
-    <table className="min-w-max w-full text-left text-sm border-separate border-spacing-0">
+<div className="flex-1 flex flex-col rounded-xl shadow-sm border dark:border-gray-700 bg-white dark:bg-gray-800">
+  <div className="overflow-auto pb-3 px-1">
+    <table className="min-w-max w-full text-left text-sm border-collapse">
 
           <thead className="bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 sticky top-0 z-20 backdrop-blur-sm">
             <tr>
