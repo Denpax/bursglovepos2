@@ -8,46 +8,52 @@ export default function CategoryManagerModal({ onClose, storeMode }) {
   const [loading, setLoading] = useState(false);
 
   // ✅ Montaje seguro con cleanup y control de errores
-  useEffect(() => {
-    let isMounted = true;
+ useEffect(() => {
+  let isMounted = true;
 
-    async function safeFetchCategories() {
-      if (!storeMode) return; // 🛑 Previene llamada sin store definido
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          ?.from('categories')
-          ?.select('*')
-          ?.eq('store_type', storeMode)
-          ?.order('name', { ascending: true });
-
-        if (error) throw error;
-        if (!data || !Array.isArray(data)) {
-          if (isMounted) setCategories([]);
-          return;
-        }
-
-        if (isMounted) {
-          const sortedData = data.sort((a, b) =>
-            a.name?.localeCompare(b.name ?? '', 'es', { sensitivity: 'base' })
-          );
-          setCategories(sortedData);
-        }
-      } catch (error) {
-        console.error('[CategoryManager] Error inicial:', error);
-        if (isMounted)
-          alert('Error al cargar categorías. Verifica tu conexión a internet.');
-      } finally {
-        if (isMounted) setLoading(false);
+  async function safeFetchCategories() {
+    try {
+      if (!storeMode || storeMode === 'undefined') {
+        console.warn('[CategoryModal] 🚫 storeMode inválido:', storeMode);
+        return;
       }
+
+      console.log('[CategoryModal] 📱 Fetching categorías para', storeMode);
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('store_type', storeMode)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      if (!isMounted) return;
+
+      const safeData = Array.isArray(data) ? data : [];
+      const sortedData = safeData.sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' })
+      );
+
+      setCategories(sortedData);
+      console.log('[CategoryModal] ✅ Categorías cargadas:', safeData.length);
+    } catch (err) {
+      console.error('[CategoryModal] ❌ Error móvil:', err);
+      alert(`Error al cargar categorías:\n${err.message || 'desconocido'}`);
+    } finally {
+      if (isMounted) setLoading(false);
     }
+  }
 
-    safeFetchCategories();
+  // 🕐 Espera un poco más para móviles (1s)
+  const timeout = setTimeout(() => safeFetchCategories(), 1000);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [storeMode]);
+  return () => {
+    isMounted = false;
+    clearTimeout(timeout);
+  };
+}, [storeMode]);
+
 
   // ✅ Reutilizable fuera del montaje
   async function fetchCategories() {
