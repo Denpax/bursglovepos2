@@ -111,6 +111,17 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
     try {
       setDetailsLoading(true);
       setSelectedSale(sale);
+
+      console.log('[ReceiptsHistory] Selected sale:', {
+        total_amount: sale.total_amount,
+        tax_amount: sale.tax_amount,
+        discount_amount: sale.discount_amount,
+        points_redeemed: sale.points_redeemed,
+        points_discount_amount: sale.points_discount_amount,
+        customer_points_balance_after: sale.customer_points_balance_after,
+        cashier_name: sale.cashier_name
+      });
+
       const { data, error } = await supabase
         .from('sale_items')
         .select(`
@@ -381,8 +392,7 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
       </div>
 
       {/* Detail Panel */}
-      <div className={`${selectedSale ? 'flex' : 'hidden md:flex'} flex-col flex-1 bg-gray-100 overflow-auto`}>
-
+      <div className={`${selectedSale ? 'flex' : 'hidden md:flex'} flex-col flex-1 bg-gray-100 overflow-hidden`}>
         {selectedSale ? (
           <div className="flex flex-col h-full">
             <div className="p-4 bg-white border-b flex flex-wrap justify-between items-center shadow-sm gap-4">
@@ -408,14 +418,14 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
               </button>
             </div>
 
-          <div className="flex-1 bg-white rounded-xl shadow-sm overflow-x-auto overflow-y-auto p-4 md:p-8">
+            <div className="flex-1 overflow-y-auto p-4 md:p-8">
               {detailsLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                 </div>
               ) : (
                 <>
-                  <div className="bg-white shadow-lg rounded-xl overflow-hidden mb-6">
+                  <div className="bg-white shadow-lg rounded-xl overflow-x-auto mb-6">
                 <div className="p-6 border-b">
                   <h3 className="font-bold text-lg mb-2">Detalles de la Venta</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -443,53 +453,78 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
                     </div>
                   </div>
                 </div>
-                
-           <table className="min-w-[600px] w-full text-left text-sm">
+
+                <table className="w-full text-left min-w-[600px]">
                   <thead className="bg-gray-50 text-gray-500 text-sm">
                     <tr>
                       <th className="p-4">Producto</th>
                       <th className="p-4 text-center">Cant.</th>
                       <th className="p-4 text-right">Precio</th>
                       <th className="p-4 text-right">Total</th>
+                      <th className="p-4 text-center">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {saleItems.map(item => (
                       <tr key={item.id}>
-                        
-                         <td className="p-4 flex items-center justify-between">
-  <div>
-    <p className="font-medium">{item.name}</p>
-    {item.refunded_quantity > 0 && (
-      <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full">
-        Reembolsado: {item.refunded_quantity}
-      </span>
-    )}
-  </div>
-
-  {item.quantity > (item.refunded_quantity || 0) && (
-    <button
-      onClick={() => {
-        setRefundItem(item);
-        setRefundQuantity(1);
-      }}
-      className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
-      title="Reembolsar producto"
-    >
-      <RotateCcw size={16} />
-    </button>
-  )}
-</td>
+                        <td className="p-4">
+                          <p className="font-medium">{item.name}</p>
+                          {item.refunded_quantity > 0 && (
+                            <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full">
+                              Reembolsado: {item.refunded_quantity}
+                            </span>
+                          )}
+                        </td>
                         <td className="p-4 text-center">{item.quantity}</td>
                         <td className="p-4 text-right">${item.price.toFixed(2)}</td>
                         <td className="p-4 text-right">${item.subtotal.toFixed(2)}</td>
-              
+                        <td className="p-4 text-center">
+                          {item.quantity > (item.refunded_quantity || 0) && (
+                            <button 
+                              onClick={() => {
+                                setRefundItem(item);
+                                setRefundQuantity(1);
+                              }}
+                              className="flex items-center gap-1 px-3 py-1 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors mx-auto"
+                              title="Reembolsar producto"
+                            >
+                              <RotateCcw size={16} />
+                              <span className="text-xs font-medium">Reembolsar</span>
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-gray-50 font-bold">
+                  <tfoot className="bg-gray-50">
                     <tr>
-                      <td colSpan="3" className="p-4 text-right">Total</td>
+                      <td colSpan="3" className="p-4 text-right text-gray-600">Subtotal (sin IVA)</td>
+                      <td className="p-4 text-right text-gray-600">
+                        ${(selectedSale.total_amount / (1 + ((settings?.vat_rate || 0) / 100))).toFixed(2)}
+                      </td>
+                      <td></td>
+                    </tr>
+                    {selectedSale.discount_amount > 0 && (
+                      <tr className="text-green-600">
+                        <td colSpan="3" className="p-4 text-right">Descuento</td>
+                        <td className="p-4 text-right">-${selectedSale.discount_amount.toFixed(2)}</td>
+                        <td></td>
+                      </tr>
+                    )}
+                    {selectedSale.points_discount_amount > 0 && (
+                      <tr className="text-purple-600">
+                        <td colSpan="3" className="p-4 text-right">Puntos Usados ({selectedSale.points_redeemed})</td>
+                        <td className="p-4 text-right">-${selectedSale.points_discount_amount.toFixed(2)}</td>
+                        <td></td>
+                      </tr>
+                    )}
+                    <tr className="text-gray-600">
+                      <td colSpan="3" className="p-4 text-right">IVA ({settings?.vat_rate || 0}%)</td>
+                      <td className="p-4 text-right">${(selectedSale.tax_amount || (selectedSale.total_amount - (selectedSale.total_amount / (1 + ((settings?.vat_rate || 0) / 100))))).toFixed(2)}</td>
+                      <td></td>
+                    </tr>
+                    <tr className="font-bold border-t-2">
+                      <td colSpan="3" className="p-4 text-right">TOTAL</td>
                       <td className="p-4 text-right">${selectedSale.total_amount.toFixed(2)}</td>
                       <td></td>
                     </tr>
@@ -500,17 +535,24 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
                         <td></td>
                       </tr>
                     )}
+                    {selectedSale.customer_points_balance_after !== null && (
+                      <tr className="text-blue-600 border-t">
+                        <td colSpan="3" className="p-4 text-right">Balance de Puntos del Cliente</td>
+                        <td className="p-4 text-right font-bold">{selectedSale.customer_points_balance_after} pts</td>
+                        <td></td>
+                      </tr>
+                    )}
                   </tfoot>
                 </table>
               </div>
 
               {/* Hidden TicketReceipt for printing */}
-              <div className="hidden print:block">
+              <div className="hidden print:block overflow-x-auto">
                 <TicketReceipt
                   cart={saleItems}
                   total={selectedSale.total_amount}
-                  subtotal={selectedSale.total_amount - (selectedSale.tax_amount || 0)}
-                  tax={selectedSale.tax_amount || 0}
+                  subtotal={selectedSale.total_amount / (1 + ((settings?.vat_rate || 0) / 100))}
+                  tax={selectedSale.tax_amount || (selectedSale.total_amount - (selectedSale.total_amount / (1 + ((settings?.vat_rate || 0) / 100))))}
                   customer={selectedSale.customers}
                   settings={settings || {}}
                   ticketId={selectedSale.id}
@@ -518,7 +560,11 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
                   date={selectedSale.created_at}
                   paymentMethod={selectedSale.payment_method}
                   discount={selectedSale.discount_amount}
-                  cashierName="Administrador"
+                  pointsRedeemed={selectedSale.points_redeemed}
+                  pointsDiscount={selectedSale.points_discount_amount}
+                  customerPointsBalanceAfter={selectedSale.customer_points_balance_after}
+                  pointsEarned={selectedSale.points_earned}
+                  cashierName={selectedSale.cashier_name || "Administrador"}
                 />
               </div>
               </>
