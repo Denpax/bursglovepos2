@@ -407,7 +407,7 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 md:p-8">
+           <div className="flex-1 overflow-y-auto overflow-x-auto p-4 md:p-8">
               {detailsLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -443,7 +443,7 @@ export default function ReceiptsHistory({ storeMode = 'retail' }) {
                   </div>
                 </div>
                 
-                <table className="w-full text-left">
+            <table className="w-full min-w-[480px] text-left">
                   <thead className="bg-gray-50 text-gray-500 text-sm">
                     <tr>
                       <th className="p-4">Producto</th>
