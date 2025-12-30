@@ -1,0 +1,1 @@
+SELECT id, created_at, ticket_number FROM sales ORDER BY created_at DESC LIMIT 5;

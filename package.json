@@ -1,0 +1,62 @@
+{
+
+  "name": "vite-react-app",
+
+  "private": true,
+
+  "version": "0.0.1",
+
+  "type": "module",
+
+  "scripts": {
+
+    "dev": "vite --host 0.0.0.0 --port 3000",
+
+    "build": "vite build",
+
+    "preview": "vite preview --port 4173"
+
+  },
+
+  "dependencies": {
+
+    "@stripe/react-stripe-js": "latest",
+
+    "@stripe/stripe-js": "latest",
+
+    "@supabase/supabase-js": "latest",
+
+    "framer-motion": "latest",
+
+    "lucide-react": "latest",
+
+    "react": "^18.3.0",
+
+    "react-dom": "^18.3.0",
+
+    "react-router-dom": "latest",
+
+    "recharts": "^2.12.0",
+
+    "uuid": "^9.0.1",
+
+    "xlsx": "^0.18.5"
+
+  },
+
+  "devDependencies": {
+
+    "@vitejs/plugin-react": "^4.3.0",
+
+    "autoprefixer": "^10.4.23",
+
+    "postcss": "^8.5.6",
+
+    "tailwindcss": "^3.4.19",
+
+    "vite": "^5.4.0"
+
+  }
+
+}
+
