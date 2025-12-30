@@ -2,12 +2,13 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-}
-
-body {
-  overflow: hidden;
+  width: 100%;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch; /* habilita scroll suave en iOS */
   background-color: #f9fafb;
 }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
