@@ -91,25 +91,57 @@ export default function ProductManager({ storeMode = 'retail' }) {
 
   async function handleSaveProduct(productData, variants = []) {
     try {
+      console.log('[ProductManager] Saving product with data:', productData);
+      console.log('[ProductManager] Variants to save:', variants);
+
+      // CRITICAL: Remove product_variants from productData before inserting into products table
+      // The product_variants field is a relationship, not a column in the products table
+      const { product_variants, ...cleanProductData } = productData;
+
+      // Sanitize numeric fields: convert empty strings to null
+      if (cleanProductData.stock === '') {
+        cleanProductData.stock = null;
+      }
+      if (cleanProductData.cost === '') {
+        cleanProductData.cost = null;
+      }
+      if (cleanProductData.price === '') {
+        cleanProductData.price = null;
+      }
+      if (cleanProductData.points_price === '') {
+        cleanProductData.points_price = null;
+      }
+
+      console.log('[ProductManager] Sanitized product data:', cleanProductData);
+
       let error;
       if (editingProduct) {
+        console.log('[ProductManager] Updating existing product:', editingProduct.id);
         const { error: updateError } = await supabase
           .from('products')
-          .update(productData)
+          .update(cleanProductData)
           .eq('id', editingProduct.id);
         error = updateError;
       } else {
-        // Insert new product
+        console.log('[ProductManager] Inserting new product');
+        // Insert new product with clean data (no product_variants field)
         const { data: newProduct, error: insertError } = await supabase
           .from('products')
-          .insert([{ ...productData, store_type: storeMode }])
+          .insert([{ ...cleanProductData, store_type: storeMode }])
           .select()
           .single();
-        
+
         error = insertError;
+
+        if (error) {
+          console.error('[ProductManager] Error inserting product:', error);
+        } else {
+          console.log('[ProductManager] Product created successfully:', newProduct.id);
+        }
 
         // If success and we have variants, insert them
         if (!error && newProduct && variants.length > 0) {
+          console.log('[ProductManager] Inserting', variants.length, 'variants for product:', newProduct.id);
           const variantsToInsert = variants.map(v => ({
             product_id: newProduct.id,
             name: v.name,
@@ -122,22 +154,25 @@ export default function ProductManager({ storeMode = 'retail' }) {
           const { error: variantsError } = await supabase
             .from('product_variants')
             .insert(variantsToInsert);
-          
+
           if (variantsError) {
-            console.error('Error saving variants:', variantsError);
+            console.error('[ProductManager] Error saving variants:', variantsError);
             // We don't throw here to avoid rolling back the product creation, but we alert
             alert('Producto creado pero hubo error al guardar variantes');
+          } else {
+            console.log('[ProductManager] Variants saved successfully');
           }
         }
       }
 
       if (error) throw error;
-      
+
+      console.log('[ProductManager] Product saved successfully');
       setIsModalOpen(false);
       setEditingProduct(null);
       fetchProducts();
     } catch (error) {
-      console.error('Error saving product:', error);
+      console.error('[ProductManager] Error saving product:', error);
       alert('Error al guardar producto');
     }
   }
@@ -221,7 +256,7 @@ export default function ProductManager({ storeMode = 'retail' }) {
   if (loading) return <div className="flex justify-center p-8"><Loader className="animate-spin" /></div>;
 
   return (
-   <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900 p-4">
       {previewImage && (
         <div className="fixed inset-0 bg-black bg-opacity-80 z-[60] flex items-center justify-center p-4 cursor-pointer" onClick={() => setPreviewImage(null)}>
           <div className="relative max-w-4xl max-h-[90vh]">
@@ -356,11 +391,8 @@ export default function ProductManager({ storeMode = 'retail' }) {
         </div>
       </div>
 
-{/* ✅ Contenedor corregido sin overflow-hidden */}
-<div className="flex-1 flex flex-col rounded-xl shadow-sm border dark:border-gray-700 bg-white dark:bg-gray-800">
-  <div className="overflow-auto pb-3 px-1">
-    <table className="min-w-max w-full text-left text-sm border-collapse">
-
+      <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 min-h-0">
+        <table className="w-full text-left">
           <thead className="bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 sticky top-0 z-20 backdrop-blur-sm">
             <tr>
               <th className="p-4 font-medium text-gray-500 dark:text-gray-400 w-10"></th>
@@ -498,7 +530,6 @@ export default function ProductManager({ storeMode = 'retail' }) {
             )}
           </tbody>
         </table>
-      </div>
       </div>
 
       {isModalOpen && (
