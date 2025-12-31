@@ -1,9 +1,25 @@
 {
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/manifest.json", "destination": "/manifest.json" },
     { "source": "/service-worker.js", "destination": "/service-worker.js" },
     { "source": "/icon-192.png", "destination": "/icon-192.png" },
     { "source": "/icon-512.png", "destination": "/icon-512.png" },
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/((?!assets/|.*\\..*).*)",
+      "destination": "/index.html"
+    }
   ]
 }
